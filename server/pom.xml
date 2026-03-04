@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.openclaw</groupId>
-    <artifactId>spring-openclaw-wecom</artifactId>
+    <artifactId>openclaw-plugin-wecom-relay</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
 
-    <name>spring-openclaw-wecom</name>
+    <name>openclaw-plugin-wecom-relay</name>
     <description>WeCom webhook relay service for OpenClaw</description>
 
     <parent>

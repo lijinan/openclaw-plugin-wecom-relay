@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: spring-openclaw-wecom
+    name: openclaw-plugin-wecom-relay
   profiles:
     active: dev  # 默认使用开发环境
 
