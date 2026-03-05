@@ -11,9 +11,7 @@ export class OpenClawClient {
     this.client = axios.create({
       baseURL: config.openclaw.baseUrl,
       timeout: config.openclaw.timeout,
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: {},
     });
   }
 
@@ -23,40 +21,34 @@ export class OpenClawClient {
       ? '?' + new URLSearchParams(payload.query).toString()
       : '';
     const forwardedHeaders = payload.headers ?? {};
+    const filteredHeaders: Record<string, string> = {};
+    for (const [key, value] of Object.entries(forwardedHeaders)) {
+      const lower = key.toLowerCase();
+      if (lower === 'host' || lower === 'content-length' || lower === 'connection' || lower === 'transfer-encoding') {
+        continue;
+      }
+      filteredHeaders[key] = value;
+    }
 
     try {
-      let response;
-
-      if (payload.method === 'GET') {
-        response = await this.client.get(url + queryString, {
-          headers: {
-            ...forwardedHeaders,
-          },
-          validateStatus: () => true,
-        });
-      } else if (payload.method === 'POST') {
-        const body = payload.body || '';
-        const headers: Record<string, string> = { ...forwardedHeaders };
-        const hasContentType = Object.keys(headers).some(
-          (key) => key.toLowerCase() === 'content-type',
-        );
-        if (!hasContentType) {
-          const contentType = body.startsWith('{') || body.startsWith('[')
-            ? 'application/json'
-            : 'text/xml';
-          headers['Content-Type'] = contentType;
+      const method = (payload.method || 'GET').toUpperCase();
+      let data: string | Buffer | undefined;
+      if (method !== 'GET' && method !== 'HEAD') {
+        if (payload.bodyBase64 && (payload.isBase64 ?? true)) {
+          data = Buffer.from(payload.bodyBase64, 'base64');
+        } else {
+          data = payload.body ?? '';
         }
-
-        response = await this.client.post(url + queryString, body, {
-          headers,
-          validateStatus: () => true,
-        });
-      } else {
-        return {
-          status: 405,
-          body: JSON.stringify({ error: `Method ${payload.method} not supported` }),
-        };
       }
+
+      const response = await this.client.request({
+        method,
+        url: url + queryString,
+        headers: filteredHeaders,
+        data,
+        responseType: 'arraybuffer',
+        validateStatus: () => true,
+      });
 
       const responseHeaders: Record<string, string> = {};
       if (response.headers) {
@@ -70,14 +62,23 @@ export class OpenClawClient {
         }
       }
 
-      const responseBody = typeof response.data === 'string'
+      const buffer = Buffer.isBuffer(response.data)
         ? response.data
-        : JSON.stringify(response.data);
+        : Buffer.from(response.data as ArrayBuffer);
+      const contentType = responseHeaders['content-type'] || responseHeaders['Content-Type'];
+      const isText = this.isTextContentType(contentType);
+      const responseBody = buffer.length === 0
+        ? ''
+        : isText
+          ? buffer.toString('utf8')
+          : '';
 
       return {
         status: response.status,
         body: responseBody,
         headers: responseHeaders,
+        bodyBase64: buffer.length > 0 && !isText ? buffer.toString('base64') : undefined,
+        isBase64: buffer.length > 0 && !isText ? true : undefined,
       };
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -88,6 +89,15 @@ export class OpenClawClient {
         body: JSON.stringify({ error: `Failed to connect to OpenClaw: ${errorMessage}` }),
       };
     }
+  }
+
+  private isTextContentType(contentType?: string): boolean {
+    if (!contentType) return false;
+    const ct = contentType.toLowerCase();
+    if (ct.startsWith('text/')) return true;
+    if (ct.includes('application/json') || ct.includes('+json')) return true;
+    if (ct.includes('application/xml') || ct.includes('text/xml') || ct.includes('+xml')) return true;
+    return ct.includes('application/x-www-form-urlencoded');
   }
 
   async healthCheck(): Promise<boolean> {

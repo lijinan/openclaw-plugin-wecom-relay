@@ -22,4 +22,8 @@ public class WebhookPayload {
     private Map<String, String> headers;
 
     private String body;
+
+    private String bodyBase64;
+
+    private Boolean isBase64;
 }

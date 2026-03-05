@@ -6,9 +6,9 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class WecomRelayApplication {
+public class RelayApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(WecomRelayApplication.class, args);
+        SpringApplication.run(RelayApplication.class, args);
     }
 }

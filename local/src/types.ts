@@ -20,10 +20,14 @@ export interface WebhookPayload {
   query?: Record<string, string>;
   headers?: Record<string, string>;
   body?: string;
+  bodyBase64?: string;
+  isBase64?: boolean;
 }
 
 export interface ResponsePayload {
   status: number;
   body: string;
   headers?: Record<string, string>;
+  bodyBase64?: string;
+  isBase64?: boolean;
 }

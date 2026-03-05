@@ -32,3 +32,4 @@ local/config.json
 .idea/
 *.iml
 .vscode/
+prompts/

@@ -16,12 +16,17 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
 public class RelayWebSocketHandler extends TextWebSocketHandler {
+
+    private static final Set<String> RESERVED_CLIENT_IDS = new HashSet<>(Arrays.asList("ws", "api", "webhooks"));
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -124,6 +129,26 @@ public class RelayWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        if (isReservedClientId(clientId)) {
+            ServerMessage response = ServerMessage.builder()
+                    .type("error")
+                    .error("Invalid clientId")
+                    .build();
+            sendMessage(session, response);
+            session.close(new CloseStatus(HttpStatus.BAD_REQUEST.value(), "Invalid clientId"));
+            return;
+        }
+
+        if (!isValidClientId(clientId)) {
+            ServerMessage response = ServerMessage.builder()
+                    .type("error")
+                    .error("Invalid clientId")
+                    .build();
+            sendMessage(session, response);
+            session.close(new CloseStatus(HttpStatus.BAD_REQUEST.value(), "Invalid clientId"));
+            return;
+        }
+
         if (authToken == null || authToken.isEmpty()) {
             log.warn("Registration attempt with empty authToken");
             ServerMessage response = ServerMessage.builder()
@@ -149,6 +174,22 @@ public class RelayWebSocketHandler extends TextWebSocketHandler {
             return;
         }
 
+        String existingSessionId = clientIdToSessionId.get(clientId);
+        if (existingSessionId != null && !existingSessionId.equals(session.getId())) {
+            WebSocketSession existingSession = sessions.get(existingSessionId);
+            if (existingSession != null && existingSession.isOpen()
+                    && Boolean.TRUE.equals(authenticatedSessions.get(existingSessionId))) {
+                ServerMessage response = ServerMessage.builder()
+                        .type("error")
+                        .error("clientId already in use")
+                        .build();
+                sendMessage(session, response);
+                session.close(new CloseStatus(HttpStatus.CONFLICT.value(), "clientId in use"));
+                return;
+            }
+            clientIdToSessionId.remove(clientId, existingSessionId);
+        }
+
         clientIdToSessionId.put(clientId, session.getId());
         log.info("Client registered: {} -> session {}", clientId, session.getId());
 
@@ -157,6 +198,20 @@ public class RelayWebSocketHandler extends TextWebSocketHandler {
 
         log.info("Flushing buffered messages after client registration");
         messageBufferService.flushBuffer();
+    }
+
+    private boolean isReservedClientId(String clientId) {
+        return clientId != null && RESERVED_CLIENT_IDS.contains(clientId.toLowerCase());
+    }
+
+    private boolean isValidClientId(String clientId) {
+        if (clientId == null) {
+            return false;
+        }
+        if (clientId.length() < 1 || clientId.length() > 64) {
+            return false;
+        }
+        return clientId.matches("^[A-Za-z0-9][A-Za-z0-9_.-]*$");
     }
 
     private void handleResponse(ClientMessage message) {
@@ -192,9 +247,37 @@ public class RelayWebSocketHandler extends TextWebSocketHandler {
         return false;
     }
 
+    public boolean sendMessageToClient(String clientId, ServerMessage message) {
+        if (clientId == null || clientId.isEmpty()) {
+            return false;
+        }
+        String sessionId = clientIdToSessionId.get(clientId);
+        if (sessionId == null) {
+            return false;
+        }
+        WebSocketSession session = sessions.get(sessionId);
+        if (session == null || !session.isOpen() || !Boolean.TRUE.equals(authenticatedSessions.get(sessionId))) {
+            clientIdToSessionId.remove(clientId, sessionId);
+            return false;
+        }
+        return sendMessage(session, message);
+    }
+
     public boolean hasConnectedClient() {
         return sessions.values().stream()
                 .anyMatch(s -> s.isOpen() && Boolean.TRUE.equals(authenticatedSessions.get(s.getId())));
+    }
+
+    public boolean hasConnectedClient(String clientId) {
+        if (clientId == null || clientId.isEmpty()) {
+            return false;
+        }
+        String sessionId = clientIdToSessionId.get(clientId);
+        if (sessionId == null) {
+            return false;
+        }
+        WebSocketSession session = sessions.get(sessionId);
+        return session != null && session.isOpen() && Boolean.TRUE.equals(authenticatedSessions.get(sessionId));
     }
 
     public int getConnectedClientCount() {
