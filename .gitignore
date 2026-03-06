@@ -27,6 +27,7 @@ replay_pid*
 local/node_modules/
 local/dist/
 local/config.json
+server/src/main/resources/application.yml
 
 # IDE
 .idea/

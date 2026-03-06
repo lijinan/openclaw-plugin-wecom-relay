@@ -1,0 +1,18 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: openclaw-relay
+  profiles:
+    active: dev 
+
+openclaw:
+  relay:
+    clients:
+      openclaw-local: "your-auth-token-here"
+
+logging:
+  level:
+    root: INFO
+    com.openclaw.relay: INFO
