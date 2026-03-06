@@ -1,6 +1,6 @@
-package com.openclaw.wecom.config;
+package com.openclaw.relay.config;
 
-import com.openclaw.wecom.websocket.RelayWebSocketHandler;
+import com.openclaw.relay.websocket.RelayWebSocketHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.socket.config.annotation.EnableWebSocket;
@@ -16,7 +16,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
 
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
-        registry.addHandler(relayWebSocketHandler, "/ws/relay")
+        registry.addHandler(relayWebSocketHandler, "/relay/ws/relay")
                 .setAllowedOrigins("*");
     }
 }

@@ -1,11 +1,11 @@
-package com.openclaw.wecom.websocket;
+package com.openclaw.relay.websocket;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.openclaw.wecom.config.RelayConfig;
-import com.openclaw.wecom.model.ClientMessage;
-import com.openclaw.wecom.model.ServerMessage;
-import com.openclaw.wecom.service.MessageBufferService;
-import com.openclaw.wecom.service.PendingMessageManager;
+import com.openclaw.relay.config.RelayConfig;
+import com.openclaw.relay.model.ClientMessage;
+import com.openclaw.relay.model.ServerMessage;
+import com.openclaw.relay.service.MessageBufferService;
+import com.openclaw.relay.service.PendingMessageManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

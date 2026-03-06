@@ -1,9 +1,9 @@
-package com.openclaw.wecom.service;
+package com.openclaw.relay.service;
 
-import com.openclaw.wecom.config.RelayConfig;
-import com.openclaw.wecom.model.ServerMessage;
-import com.openclaw.wecom.model.WebhookPayload;
-import com.openclaw.wecom.websocket.RelayWebSocketHandler;
+import com.openclaw.relay.config.RelayConfig;
+import com.openclaw.relay.model.ServerMessage;
+import com.openclaw.relay.model.WebhookPayload;
+import com.openclaw.relay.websocket.RelayWebSocketHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;

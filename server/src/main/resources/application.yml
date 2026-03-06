@@ -19,4 +19,4 @@ wecom:
 logging:
   level:
     root: INFO
-    com.openclaw.wecom: INFO
+    com.openclaw.relay: INFO

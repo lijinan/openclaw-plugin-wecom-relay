@@ -4,7 +4,7 @@
 logging:
   level:
     root: WARN                    # 根日志级别设为 WARN，减少无用日志
-    com.openclaw.wecom: INFO      # 业务代码只保留 INFO 及以上
+    com.openclaw.relay: INFO      # 业务代码只保留 INFO 及以上
     org.springframework.web: WARN
     org.springframework.web.socket: WARN
     org.apache.tomcat: WARN

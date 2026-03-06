@@ -1,14 +1,15 @@
-package com.openclaw.wecom.controller;
+package com.openclaw.relay.controller;
 
-import com.openclaw.wecom.config.RelayConfig;
-import com.openclaw.wecom.model.ClientMessage;
-import com.openclaw.wecom.model.ServerMessage;
-import com.openclaw.wecom.model.WebhookPayload;
-import com.openclaw.wecom.service.PendingMessageManager;
-import com.openclaw.wecom.websocket.RelayWebSocketHandler;
+import com.openclaw.relay.config.RelayConfig;
+import com.openclaw.relay.model.ClientMessage;
+import com.openclaw.relay.model.ServerMessage;
+import com.openclaw.relay.model.WebhookPayload;
+import com.openclaw.relay.service.PendingMessageManager;
+import com.openclaw.relay.websocket.RelayWebSocketHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -71,7 +72,7 @@ public class RelayProxyController {
     @Autowired
     private RelayConfig relayConfig;
 
-    @RequestMapping("/{clientId:^(?!ws$)(?!api$)(?!webhooks$).+}/**")
+    @RequestMapping("/relay/client/{clientId}/**")
     public ResponseEntity<byte[]> relay(
             @PathVariable("clientId") String clientId,
             HttpServletRequest request,
@@ -79,21 +80,19 @@ public class RelayProxyController {
 
         String method = request.getMethod();
         if (method == null || !ALLOWED_METHODS.contains(method.toUpperCase())) {
-            return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                    .body("Method Not Allowed".getBytes(StandardCharsets.UTF_8));
+            return plainText(HttpStatus.METHOD_NOT_ALLOWED, "Method Not Allowed");
         }
 
         String requiredToken = relayConfig.getToken();
         if (requiredToken != null && !requiredToken.isEmpty()) {
             String token = request.getHeader("X-Relay-Token");
             if (token == null || !requiredToken.equals(token)) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Unauthorized".getBytes(StandardCharsets.UTF_8));
+                return plainText(HttpStatus.UNAUTHORIZED, "Unauthorized");
             }
         }
 
         if (!webSocketHandler.hasConnectedClient(clientId)) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(("No connected client for clientId: " + clientId).getBytes(StandardCharsets.UTF_8));
+            return plainText(HttpStatus.SERVICE_UNAVAILABLE, "No connected client for clientId: " + clientId);
         }
 
         String requestPath = getPathWithoutClientId(request, clientId);
@@ -123,15 +122,13 @@ public class RelayProxyController {
 
         ServerMessage message = ServerMessage.webhook(messageId, payload);
         if (!webSocketHandler.sendMessageToClient(clientId, message)) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(("Failed to send request to clientId: " + clientId).getBytes(StandardCharsets.UTF_8));
+            return plainText(HttpStatus.SERVICE_UNAVAILABLE, "Failed to send request to clientId: " + clientId);
         }
 
         try {
             ClientMessage response = future.get();
             if (response.getError() != null) {
-                return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                        .body(response.getError().getBytes(StandardCharsets.UTF_8));
+                return plainText(HttpStatus.BAD_GATEWAY, response.getError());
             }
 
             Map<String, Object> responsePayload = (Map<String, Object>) response.getPayload();
@@ -176,17 +173,21 @@ public class RelayProxyController {
 
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Interrupted".getBytes(StandardCharsets.UTF_8));
+            return plainText(HttpStatus.INTERNAL_SERVER_ERROR, "Interrupted");
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
             if (cause instanceof TimeoutException) {
-                return ResponseEntity.status(HttpStatus.GATEWAY_TIMEOUT)
-                        .body(cause.getMessage().getBytes(StandardCharsets.UTF_8));
+                return plainText(HttpStatus.GATEWAY_TIMEOUT, cause.getMessage());
             }
-            return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                    .body(("Error: " + (cause != null ? cause.getMessage() : e.getMessage())).getBytes(StandardCharsets.UTF_8));
+            return plainText(HttpStatus.BAD_GATEWAY, "Error: " + (cause != null ? cause.getMessage() : e.getMessage()));
         }
+    }
+
+    private ResponseEntity<byte[]> plainText(HttpStatus status, String message) {
+        String safeMessage = message == null ? "" : message;
+        return ResponseEntity.status(status)
+                .contentType(MediaType.TEXT_PLAIN)
+                .body(safeMessage.getBytes(StandardCharsets.UTF_8));
     }
 
     private String getPathWithoutClientId(HttpServletRequest request, String clientId) {
@@ -196,7 +197,7 @@ public class RelayProxyController {
             uri = uri.substring(contextPath.length());
         }
 
-        String prefix = "/" + clientId;
+        String prefix = "/relay/client/" + clientId;
         if (uri.startsWith(prefix)) {
             String rest = uri.substring(prefix.length());
             return rest.isEmpty() ? "/" : rest;

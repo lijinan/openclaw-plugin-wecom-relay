@@ -1,8 +1,8 @@
-package com.openclaw.wecom.controller;
+package com.openclaw.relay.controller;
 
-import com.openclaw.wecom.service.MessageBufferService;
-import com.openclaw.wecom.websocket.RelayWebSocketHandler;
-import com.openclaw.wecom.service.PendingMessageManager;
+import com.openclaw.relay.service.MessageBufferService;
+import com.openclaw.relay.websocket.RelayWebSocketHandler;
+import com.openclaw.relay.service.PendingMessageManager;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -14,7 +14,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping("/api")
+@RequestMapping("/relay/check")
 public class HealthController {
 
     @Autowired

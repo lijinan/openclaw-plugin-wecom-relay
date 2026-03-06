@@ -24,7 +24,7 @@ export interface Config {
 
 export const defaultConfig: Config = {
   server: {
-    url: 'ws://localhost:8080/ws/relay',
+    url: 'ws://localhost:8080/relay/ws/relay',
     reconnectInterval: 5000,
     maxReconnectAttempts: 0,
   },

@@ -31,7 +31,7 @@ cp config.example.json config.json
 ```json
 {
   "server": {
-    "url": "wss://your-server.com/ws/relay",
+    "url": "wss://your-server.com/relay/ws/relay",
     "reconnectInterval": 5000,
     "maxReconnectAttempts": 0
   },
@@ -68,7 +68,7 @@ npm start
 
 | 配置项 | 说明 | 默认值 |
 |--------|------|--------|
-| `server.url` | 公网服务器 WebSocket 地址 | `ws://localhost:8080/ws/relay` |
+| `server.url` | 公网服务器 WebSocket 地址 | `ws://localhost:8080/relay/ws/relay` |
 | `server.reconnectInterval` | 重连间隔（毫秒） | `5000` |
 | `server.maxReconnectAttempts` | 最大重连次数，0 表示无限 | `0` |
 | `auth.clientId` | 客户端标识 | `openclaw-local` |

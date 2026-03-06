@@ -1,4 +1,4 @@
-package com.openclaw.wecom.config;
+package com.openclaw.relay.config;
 
 import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;

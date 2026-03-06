@@ -1,6 +1,6 @@
 {
   "server": {
-    "url": "wss://your-server.com/ws/relay",
+    "url": "wss://your-server.com/relay/ws/relay",
     "reconnectInterval": 5000,
     "maxReconnectAttempts": 0
   },

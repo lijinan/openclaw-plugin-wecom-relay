@@ -1,4 +1,4 @@
-package com.openclaw.wecom;
+package com.openclaw.relay;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

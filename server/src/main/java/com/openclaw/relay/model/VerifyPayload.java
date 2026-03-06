@@ -1,4 +1,4 @@
-package com.openclaw.wecom.model;
+package com.openclaw.relay.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

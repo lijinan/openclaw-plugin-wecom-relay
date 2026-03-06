@@ -1,7 +1,7 @@
-package com.openclaw.wecom.service;
+package com.openclaw.relay.service;
 
-import com.openclaw.wecom.config.RelayConfig;
-import com.openclaw.wecom.model.ClientMessage;
+import com.openclaw.relay.config.RelayConfig;
+import com.openclaw.relay.model.ClientMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;

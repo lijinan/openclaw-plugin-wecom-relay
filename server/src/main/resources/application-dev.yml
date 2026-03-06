@@ -4,6 +4,6 @@
 logging:
   level:
     root: INFO
-    com.openclaw.wecom: DEBUG  # 开发环境开启 DEBUG，方便调试
+    com.openclaw.relay: DEBUG  # 开发环境开启 DEBUG，方便调试
     org.springframework.web: DEBUG
     org.springframework.web.socket: DEBUG

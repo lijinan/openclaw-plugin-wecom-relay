@@ -69,7 +69,7 @@ echo ""
 # 5. 检查服务状态
 echo "5. 检查服务状态..."
 sleep 8
-HEALTH_STATUS=$(curl -s http://localhost:8080/api/health)
+HEALTH_STATUS=$(curl -s http://localhost:8080/relay/check/health)
 if [ $? -eq 0 ]; then
     echo "✓ 服务健康检查成功"
     echo "服务状态: $HEALTH_STATUS"
