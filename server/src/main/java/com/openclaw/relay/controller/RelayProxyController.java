@@ -170,6 +170,13 @@ public class RelayProxyController {
             }
         }
 
+        if (!responseHeaders.containsKey(HttpHeaders.CONTENT_TYPE)) {
+            MediaType inferred = inferContentType(responseBody);
+            if (inferred != null) {
+                responseHeaders.setContentType(inferred);
+            }
+        }
+
         ResponseEntity.BodyBuilder builder = ResponseEntity.status(status).headers(responseHeaders);
         return builder.body(responseBody);
     }
@@ -239,5 +246,19 @@ public class RelayProxyController {
             return true;
         }
         return ct.contains("application/x-www-form-urlencoded");
+    }
+
+    private MediaType inferContentType(byte[] body) {
+        if (body == null || body.length == 0) {
+            return null;
+        }
+        String text = new String(body, StandardCharsets.UTF_8).trim();
+        if (text.isEmpty()) {
+            return null;
+        }
+        if ((text.startsWith("{") && text.endsWith("}")) || (text.startsWith("[") && text.endsWith("]"))) {
+            return MediaType.parseMediaType("application/json;charset=UTF-8");
+        }
+        return MediaType.parseMediaType("text/plain;charset=UTF-8");
     }
 }
