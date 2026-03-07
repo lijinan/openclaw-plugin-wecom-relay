@@ -36,11 +36,11 @@ public class RelayConfig {
     @Data
     public static class Bus {
         private String type = "memory";
-        private String keyPrefix = "openclaw:relay";
+        private String keyPrefix = "relay";
         private int requestTtlSeconds = 300;
         private int responseTtlSeconds = 300;
         private int pollTimeoutMs = 1000;
-        private int processorFixedDelayMs = 50;
+        private int processorFixedDelayMs = 500;
     }
 
     /**

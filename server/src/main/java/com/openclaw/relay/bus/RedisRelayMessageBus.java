@@ -6,6 +6,7 @@ import com.openclaw.relay.model.ClientMessage;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.serializer.RedisSerializer;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
                 redisTemplate.expire(key, ttl, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
-            log.error("Failed to publish request: {}", e.getMessage());
+            log.error("Failed to publish request", e);
         }
     }
 
@@ -78,7 +79,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
         int timeoutSeconds = (int) Math.max(1, (timeoutMs + 999) / 1000);
         byte[][] keyBytes = new byte[keys.size()][];
         for (int i = 0; i < keys.size(); i++) {
-            keyBytes[i] = keys.get(i).getBytes(StandardCharsets.UTF_8);
+            keyBytes[i] = serializeKey(keys.get(i));
         }
 
         String json = redisTemplate.execute((RedisConnection connection) -> {
@@ -106,7 +107,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
                 redisTemplate.expire(key, ttl, TimeUnit.SECONDS);
             }
         } catch (Exception e) {
-            log.error("Failed to publish response: {}", e.getMessage());
+            log.error("Failed to publish response", e);
         }
     }
 
@@ -123,7 +124,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
         } else {
             int timeoutSeconds = (int) Math.max(1, (timeoutMs + 999) / 1000);
             json = redisTemplate.execute((RedisConnection connection) -> {
-                List<byte[]> result = connection.bRPop(timeoutSeconds, key.getBytes(StandardCharsets.UTF_8));
+                List<byte[]> result = connection.bRPop(timeoutSeconds, serializeKey(key));
                 if (result == null || result.size() < 2 || result.get(1) == null) {
                     return null;
                 }
@@ -137,7 +138,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
         try {
             return objectMapper.readValue(json, ClientMessage.class);
         } catch (Exception e) {
-            log.error("Failed to parse response: {}", e.getMessage());
+            log.error("Failed to parse response", e);
             return null;
         }
     }
@@ -174,7 +175,7 @@ public class RedisRelayMessageBus implements RelayMessageBus {
         try {
             return objectMapper.readValue(json, BusRequest.class);
         } catch (Exception e) {
-            log.error("Failed to parse request: {}", e.getMessage());
+            log.error("Failed to parse request", e);
             return null;
         }
     }
@@ -189,5 +190,13 @@ public class RedisRelayMessageBus implements RelayMessageBus {
 
     private String onlineClientsKey() {
         return relayConfig.getBus().getKeyPrefix() + ":clients:online";
+    }
+
+    private byte[] serializeKey(String key) {
+        RedisSerializer<?> keySerializer = redisTemplate.getKeySerializer();
+        if (keySerializer == null) {
+            return key.getBytes(StandardCharsets.UTF_8);
+        }
+        return ((RedisSerializer<String>) keySerializer).serialize(key);
     }
 }
